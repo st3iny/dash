@@ -32,8 +32,11 @@
  * SUCH DAMAGE.
  */
 
+#include <spawn.h>
+#include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdlib.h>
@@ -70,6 +73,7 @@
 #include "jobs.h"
 #include "alias.h"
 #include "system.h"
+#include "spawn_server.h"
 
 
 #define CMDTABLESIZE 31		/* should be prime */
@@ -97,6 +101,9 @@ STATIC struct tblentry *cmdlookup(const char *, int);
 STATIC void delete_cmd_entry(void);
 STATIC void addcmdentry(char *, struct cmdentry *);
 STATIC int describe_command(struct output *, char *, int);
+
+
+void *spawn_server = NULL;
 
 
 /*
@@ -153,15 +160,66 @@ tryexec(char *cmd, char **argv, char **envp)
 {
 	char *const path_bshell = _PATH_BSHELL;
 
+	/*
+	if (spawn_server == NULL) {
+		spawn_server_init(&spawn_server);
+	}
+
+	char *spawn_server_var = lookupvar("SPAWN_SERVER");
+	if (spawn_server_var == NULL) {
+		spawn_server_start(spawn_server);
+		setvar("SPAWN_SERVER", "127.0.0.1:8088", VEXPORT);
+		envp = environment();
+	}
+	*/
+
+	spawn_server_init(&spawn_server);
+	spawn_server_start(spawn_server);
+	//sleep(1);
+
+	posix_spawnattr_t attr;
+	posix_spawnattr_init(&attr);
+
+	posix_spawn_file_actions_t file_actions;
+	posix_spawn_file_actions_init(&file_actions);
+
+	int spawn_result;
+	pid_t pid;
+	int child_status, exit_status;
+
 repeat:
 #ifdef SYSV
 	do {
 		execve(cmd, argv, envp);
 	} while (errno == EINTR);
 #else
-	execve(cmd, argv, envp);
+	//execve(cmd, argv, envp);
+	spawn_result = spawn_server_request_spawn(
+		spawn_server,
+		cmd,
+		file_actions,
+		attr,
+		argv,
+		envp,
+		0,
+		0,
+		&pid
+	);
+	if (spawn_result == 0) {
+		spawn_server_destroy(spawn_server);
+		if (waitpid(pid, &child_status, 0) == -1) {
+			perror("waitpid");
+			exit(-1);
+		}
+
+		exit_status = WEXITSTATUS(child_status);
+		printf("dash: child exited with %d\n", exit_status);
+		exit(exit_status);
+	}
+	printf("dash: spawn_server_request_spawn: returned %d\n", spawn_result);
 #endif
-	if (cmd != path_bshell && errno == ENOEXEC) {
+	//if (cmd != path_bshell && errno == ENOEXEC) {
+	if (cmd != path_bshell && spawn_result != 0) {
 		*argv-- = cmd;
 		*argv = cmd = path_bshell;
 		goto repeat;

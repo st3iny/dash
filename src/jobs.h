@@ -91,10 +91,12 @@ extern int jobctl;		/* true if doing job control */
 #define jobctl 0
 #endif
 
+#if JOBS
 void setjobctl(int);
-int killcmd(int, char **);
 int fgcmd(int, char **);
 int bgcmd(int, char **);
+#endif
+int killcmd(int, char **);
 int jobscmd(int, char **);
 struct output;
 void showjobs(struct output *, int);

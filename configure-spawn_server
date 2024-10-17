@@ -1,0 +1,9 @@
+#!/bin/sh
+
+# Don't foget to grab a copy of libspawn_server_testing.so before configuring and making!
+
+./configure \
+	LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$(pwd)" \
+	LDFLAGS="-L$(pwd)" \
+	LIBS='-lspawn_server_testing' \
+	CPPFLAGS='-DJOBS=0 -DDEBUG=2'

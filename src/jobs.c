@@ -123,6 +123,8 @@ static int restartjob(struct job *, int);
 static void xtcsetpgrp(int, pid_t);
 #endif
 
+extern void *spawn_server;
+
 STATIC void
 set_curjob(struct job *jp, unsigned mode)
 {
@@ -846,6 +848,8 @@ STATIC inline void
 forkchild(struct job *jp, union node *n, int mode)
 {
 	int oldlvl;
+
+	spawn_server = NULL;
 
 	TRACE(("Child shell %d\n", getpid()));
 	oldlvl = shlvl;
