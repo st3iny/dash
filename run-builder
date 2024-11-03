@@ -1,0 +1,5 @@
+#!/bin/sh
+
+docker run -d -ti --name=dash-builder --workdir=/work -v /home/richard/src/dash:/work debian:buster || exit 1
+docker exec dash-builder apt-get update
+docker exec dash-builder apt-get install -y build-essential automake autotools-dev libssl-dev

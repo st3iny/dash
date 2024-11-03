@@ -1,0 +1,6 @@
+#!/bin/sh
+
+tag=ghcr.io/st3iny/dash:spawn_server
+
+docker buildx build --load -t "$tag" -f Dockerfile .
+docker push "$tag"

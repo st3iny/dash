@@ -6,4 +6,4 @@
 	LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$(pwd)" \
 	LDFLAGS="-L$(pwd)" \
 	LIBS='-lspawn_server_testing' \
-	CPPFLAGS='-DJOBS=0 -DDEBUG=2'
+	CPPFLAGS='-DJOBS=0 -DDEBUG=1'
